@@ -1,5 +1,9 @@
 # ML Model - Virtual Environment (DO NOT COMMIT)
 ml_model/model/Lib/site-packages/xgboost/lib/xgboost.dll
+ml_model/model/Lib/
+venv/
+site-packages/
+
 ml_model/Lib/
 ml_model/Scripts/
 ml_model/Include/
