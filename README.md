@@ -60,5 +60,4 @@ AnchorRisk addresses this gap using **graph modeling + ML-based fragility analys
 
 ---
 
-## 🧩 High-Level Architecture
 
