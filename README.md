@@ -1,57 +1,64 @@
-AnchorRisk is a fintech decision-support system that evaluates loan risk by analyzing household financial structures, not just individual income.
+# 🏦 AnchorRisk  
+### Household-Aware Financial Risk & Loan Decision Support System
 
-Traditional credit systems assess applicants in isolation.
-AnchorRisk models how financial stress propagates through a household, revealing hidden fragility that leads to loan defaults.
+---
 
-Loans are issued to individuals, but defaults occur due to household obligations.
+## 📌 Overview
 
-AnchorRisk addresses this gap by:
+**AnchorRisk** is a fintech decision-support platform that evaluates **loan risk by analyzing household financial structures**, not just individual income.
 
-Modeling households as dependency graphs
+Traditional credit systems assess applicants in isolation.  
+AnchorRisk models **how financial stress propagates through a household**, revealing hidden fragility that often causes loan defaults.
 
-Simulating income shocks
+This project was built as a **hackathon MVP** with a focus on:
+- Explainability
+- Real-world banking logic
+- Privacy-first design
+- Practical risk insights
 
-Separating structural risk from loan affordability
+---
 
-Providing clear explanations and safeguards
+## 🎯 Problem Statement
 
-🧠 Core Features
-1️⃣ Household Graph Modeling
+> *Loans are issued to individuals, but defaults occur due to household obligations.*
 
-People represented as nodes
+Existing systems fail to capture:
+- Dependency chains
+- Income concentration risk
+- Cascading financial stress
 
-Financial responsibilities represented as edges
+AnchorRisk addresses this gap using **graph modeling + ML-based fragility analysis**.
 
-Captures dependencies, redundancy, and cascades
+---
 
-2️⃣ ML-Based Fragility Scoring
+## 🧠 Core Features
 
-Predicts household financial fragility
+### 1️⃣ Household Graph Modeling
+- Individuals represented as graph nodes
+- Financial responsibilities represented as edges
+- Captures dependencies, redundancy, and cascades
 
-Identifies single points of failure
+### 2️⃣ ML-Based Fragility Scoring
+- Predicts household-level financial fragility
+- Identifies single points of failure
+- Outputs explainable risk bands (LOW / MEDIUM / HIGH)
 
-Outputs explainable risk bands (LOW / MEDIUM / HIGH)
+### 3️⃣ Stress Simulation
+- Simulates income loss **without removing people**
+- Preserves household obligations
+- Shows how risk propagates across the graph
 
-3️⃣ Stress Simulation
+### 4️⃣ Loan Affordability Check
+- Uses applicant’s monthly income
+- Applies EMI ≤ 40% income rule
+- Determines if a requested loan is affordable
 
-Simulates income loss without removing people
+### 5️⃣ Decision Support Output
+- APPROVE / CONDITIONAL APPROVE / REJECT
+- Clear recommendations and safeguards
+- Human-readable explanations
 
-Preserves obligations for realistic outcomes
+---
 
-Shows how risk propagates across the household
+## 🧩 High-Level Architecture
 
-4️⃣ Loan Affordability Check
-
-Uses applicant’s monthly income
-
-EMI ≤ 40% income rule
-
-Evaluates if the requested loan is affordable
-
-5️⃣ Actionable Loan Decisions
-
-Approve / Conditional Approve / Reject
-
-Clear safeguards and recommendations
-
-Human-readable explanations
