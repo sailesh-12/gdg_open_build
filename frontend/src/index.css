@@ -1,0 +1,113 @@
+/* Government-Style Global Styles */
+
+:root {
+  /* System font stack - no web fonts */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  line-height: 1.6;
+  font-weight: 400;
+  color-scheme: light;
+
+  /* Government color palette */
+  --color-bg-primary: #FFFFFF;
+  --color-bg-secondary: #F5F5F5;
+  --color-bg-tertiary: #E5E5E5;
+
+  --color-primary: #004085;
+  --color-primary-dark: #003366;
+
+  --color-text-primary: #212529;
+  --color-text-secondary: #6C757D;
+
+  --color-border: #CED4DA;
+  --color-border-light: #DEE2E6;
+
+  --color-success: #28A745;
+  --color-success-bg: #D4EDDA;
+  --color-success-text: #155724;
+
+  --color-warning: #FFC107;
+  --color-warning-bg: #FFF3CD;
+  --color-warning-text: #856404;
+
+  --color-danger: #DC3545;
+  --color-danger-bg: #F8D7DA;
+  --color-danger-text: #721C24;
+
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-secondary);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--color-bg-secondary);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+a:hover {
+  color: var(--color-primary-dark);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+h1 {
+  font-size: 32px;
+}
+
+h2 {
+  font-size: 24px;
+}
+
+h3 {
+  font-size: 18px;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+/* Use browser default scrollbar - no custom styling */
+
+/* Selection */
+::selection {
+  background: var(--color-primary);
+  color: #FFFFFF;
+}

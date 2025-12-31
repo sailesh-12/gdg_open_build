@@ -1,0 +1,12 @@
+/* Government-Style App Container */
+
+.gov-container {
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.gov-page-wrapper {
+  background: var(--color-bg-primary);
+  min-height: 100vh;
+}
