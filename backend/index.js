@@ -3,6 +3,7 @@ const dotenv = require("dotenv");
 const cors = require("cors");
 const riskRoutes = require("./routes/risk.js");
 const householdRoutes = require("./routes/household");
+const statementRoutes = require("./routes/statement");
 
 // Load the .env file from the custom path
 dotenv.config({ path: "/custom/path/.env" });
@@ -24,6 +25,7 @@ app.use((err, req, res, next) => {
 
 app.use("/household", householdRoutes);
 app.use("/risk", riskRoutes);
+app.use("/statement", statementRoutes);
 
 app.get("/", (req, res) => {
   res.send("Express + Neo4j working");

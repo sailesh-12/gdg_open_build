@@ -43,17 +43,21 @@ export const api = {
         return response.json();
     },
 
-    // Simulate income loss
-    async simulateRisk(householdId, affectedMember) {
+    // Simulate income loss with different shock types
+    async simulateRisk(householdId, affectedMember, shockType = 'member_loss') {
         const response = await fetch(`${API_BASE_URL}/risk/simulate/${householdId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ affected_member: affectedMember }),
+            body: JSON.stringify({
+                affected_member: affectedMember,
+                shock_type: shockType
+            }),
         });
         if (!response.ok) {
-            throw new Error('Simulation failed');
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || 'Simulation failed. Please try again.');
         }
         return response.json();
     },
@@ -114,6 +118,38 @@ export const api = {
         const response = await fetch(`${API_BASE_URL}/risk/graph-data/${householdId}`);
         if (!response.ok) {
             throw new Error('Failed to fetch graph data');
+        }
+        return response.json();
+    },
+
+    // Upload bank statement for parsing
+    async uploadStatement(file) {
+        const formData = new FormData();
+        formData.append('statement', file);
+
+        const response = await fetch(`${API_BASE_URL}/statement/upload`, {
+            method: 'POST',
+            body: formData,
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to upload statement');
+        }
+        return response.json();
+    },
+
+    // Create household from parsed statement data
+    async createHouseholdFromStatement(householdData) {
+        const response = await fetch(`${API_BASE_URL}/statement/create-household`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(householdData),
+        });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create household');
         }
         return response.json();
     },

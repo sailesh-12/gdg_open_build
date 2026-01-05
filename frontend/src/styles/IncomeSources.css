@@ -1,0 +1,155 @@
+/* Income Sources Styling */
+.income-sources-section {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+.advanced-toggle {
+    margin-bottom: 1rem;
+}
+
+.advanced-toggle input[type="checkbox"] {
+    margin-right: 0.5rem;
+}
+
+.advanced-toggle label {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-label {
+    font-weight: 600;
+    color: #1a73e8;
+    font-size: 0.9rem;
+}
+
+.toggle-hint {
+    font-size: 0.75rem;
+    color: #5f6368;
+    margin-top: 0.25rem;
+}
+
+.income-sources-list {
+    margin-top: 1rem;
+}
+
+.sources-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.sources-header h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: #202124;
+}
+
+.add-source-btn {
+    padding: 0.4rem 0.8rem;
+    background: #1a73e8;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.add-source-btn:hover {
+    background: #1557b0;
+}
+
+.income-source-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    padding: 1rem;
+    background: white;
+    border-radius: 6px;
+    margin-bottom: 0.75rem;
+    border: 1px solid #dadce0;
+}
+
+.source-fields {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 1fr 0.8fr 0.6fr;
+    gap: 0.75rem;
+    flex: 1;
+    align-items: end;
+}
+
+.form-group-sm {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group-sm label {
+    font-size: 0.75rem;
+    color: #5f6368;
+    margin-bottom: 0.3rem;
+    font-weight: 500;
+}
+
+.form-group-sm select,
+.form-group-sm input[type="range"] {
+    font-size: 0.85rem;
+    padding: 0.4rem;
+}
+
+.checkbox-sm {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.checkbox-sm input[type="checkbox"] {
+    margin: 0;
+}
+
+.checkbox-sm label {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.remove-source-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: #f1f3f4;
+    color: #5f6368;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.remove-source-btn:hover {
+    background: #fee;
+    color: #d93025;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .source-fields {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+}
+
+/* Integration with existing Dashboard.css */
+.member-row .income-sources-section {
+    grid-column: 1 / -1;
+    margin-top: 0.5rem;
+}

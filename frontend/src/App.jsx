@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import HouseholdSelector from './pages/HouseholdSelector';
 import CreateHousehold from './pages/CreateHousehold';
+import BankStatementUpload from './pages/BankStatementUpload';
 import DashboardLayout from './components/dashboard/DashboardLayout';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import RiskSummaryPage from './pages/dashboard/RiskSummaryPage';
@@ -36,6 +37,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <CreateHousehold />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/upload-statement"
+            element={
+              <ProtectedRoute>
+                <BankStatementUpload />
               </ProtectedRoute>
             }
           />

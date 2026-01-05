@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../services/api';
+import { formatId } from '../../utils/formatId';
 
 const GraphVisualization = ({ householdId }) => {
     const [graphData, setGraphData] = useState(null);
@@ -85,7 +86,7 @@ const GraphVisualization = ({ householdId }) => {
 
             {/* Enhanced Graph Visualization */}
             {graphData.nodes && graphData.nodes.length > 0 && (
-                <div className="graph-container" style={{ marginTop: '24px', padding: '24px', background: '#FAFAFA' }}>
+                <div id="graph-visualization" className="graph-container" style={{ marginTop: '24px', padding: '24px', background: '#FAFAFA' }}>
                     <svg viewBox="0 0 700 500" style={{ width: '100%', maxWidth: '700px', height: 'auto', display: 'block', margin: '0 auto', background: 'var(--color-bg-primary)' }}>
                         <defs>
                             {/* Arrow marker for directed edges */}
@@ -227,7 +228,7 @@ const GraphVisualization = ({ householdId }) => {
                                         fontSize="13"
                                         fontWeight="600"
                                     >
-                                        {node.label}
+                                        {formatId(node.label || node.id)}
                                     </text>
 
                                     {/* Additional labels for special roles */}

@@ -11,6 +11,18 @@ const firebaseConfig = {
     measurementId: "G-8C563KPJSP"
 };
 
+// Debug logging
+console.log("🔥 Firebase Configuration:");
+console.log("  Project ID:", firebaseConfig.projectId);
+console.log("  Auth Domain:", firebaseConfig.authDomain);
+console.log("  API Key (first 10 chars):", firebaseConfig.apiKey.substring(0, 10) + "...");
+console.log("  App ID:", firebaseConfig.appId);
+
 const app = initializeApp(firebaseConfig);
+console.log("✅ Firebase app initialized successfully");
+
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+console.log("✅ Firebase Auth instance created");
+console.log("  Current user:", auth.currentUser);

@@ -1,0 +1,88 @@
+{
+    "householdId": "test-family-2025",
+    "members": [
+        {
+            "id": "john-doe",
+            "role": "earner",
+            "is_applicant": true,
+            "income_sources": [
+                {
+                    "type": "job",
+                    "stability": 0.9,
+                    "volatility": 0.15,
+                    "is_primary": true,
+                    "amount_band": "high"
+                },
+                {
+                    "type": "rental",
+                    "stability": 0.85,
+                    "volatility": 0.25,
+                    "is_primary": false,
+                    "amount_band": "medium"
+                }
+            ]
+        },
+        {
+            "id": "jane-doe",
+            "role": "earner",
+            "is_applicant": false,
+            "income_sources": [
+                {
+                    "type": "freelance",
+                    "stability": 0.65,
+                    "volatility": 0.7,
+                    "is_primary": true,
+                    "amount_band": "medium"
+                }
+            ]
+        },
+        {
+            "id": "robert-doe-sr",
+            "role": "earner",
+            "is_applicant": false,
+            "income_sources": [
+                {
+                    "type": "pension",
+                    "stability": 0.95,
+                    "volatility": 0.1,
+                    "is_primary": true,
+                    "amount_band": "low"
+                }
+            ]
+        },
+        {
+            "id": "emma-doe",
+            "role": "dependent",
+            "is_applicant": false,
+            "income_stability": 0
+        },
+        {
+            "id": "oliver-doe",
+            "role": "dependent",
+            "is_applicant": false,
+            "income_stability": 0
+        }
+    ],
+    "supports": [
+        {
+            "from": "john-doe",
+            "to": "emma-doe",
+            "strength": 0.8
+        },
+        {
+            "from": "john-doe",
+            "to": "oliver-doe",
+            "strength": 0.8
+        },
+        {
+            "from": "jane-doe",
+            "to": "emma-doe",
+            "strength": 0.7
+        },
+        {
+            "from": "jane-doe",
+            "to": "oliver-doe",
+            "strength": 0.7
+        }
+    ]
+}

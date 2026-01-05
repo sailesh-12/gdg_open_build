@@ -1,0 +1,252 @@
+{
+    "description": "Test data for income-type based stress simulations",
+    "test_household": {
+        "householdId": "test-family-2025",
+        "householdName": "Test Family 2025",
+        "members": [
+            {
+                "name": "John Doe",
+                "role": "earner",
+                "is_applicant": true,
+                "relationship": "Self",
+                "income_sources": [
+                    {
+                        "type": "job",
+                        "stability": 0.9,
+                        "volatility": 0.15,
+                        "is_primary": true,
+                        "amount_band": "high",
+                        "description": "Software Engineer at TechCorp",
+                        "monthlyAverage": 125000
+                    },
+                    {
+                        "type": "rental",
+                        "stability": 0.85,
+                        "volatility": 0.25,
+                        "is_primary": false,
+                        "amount_band": "medium",
+                        "description": "Rental property income",
+                        "monthlyAverage": 25000
+                    }
+                ]
+            },
+            {
+                "name": "Jane Doe",
+                "role": "earner",
+                "is_applicant": false,
+                "relationship": "Spouse",
+                "income_sources": [
+                    {
+                        "type": "freelance",
+                        "stability": 0.65,
+                        "volatility": 0.7,
+                        "is_primary": true,
+                        "amount_band": "medium",
+                        "description": "Freelance graphic designer",
+                        "monthlyAverage": 45000
+                    }
+                ]
+            },
+            {
+                "name": "Robert Doe Sr",
+                "role": "earner",
+                "is_applicant": false,
+                "relationship": "Parent",
+                "income_sources": [
+                    {
+                        "type": "pension",
+                        "stability": 0.95,
+                        "volatility": 0.1,
+                        "is_primary": true,
+                        "amount_band": "low",
+                        "description": "Government pension",
+                        "monthlyAverage": 15000
+                    }
+                ]
+            },
+            {
+                "name": "Emma Doe",
+                "role": "dependent",
+                "is_applicant": false,
+                "relationship": "Child",
+                "income_sources": []
+            },
+            {
+                "name": "Oliver Doe",
+                "role": "dependent",
+                "is_applicant": false,
+                "relationship": "Child",
+                "income_sources": []
+            }
+        ],
+        "supports": [
+            {
+                "from": "john-doe",
+                "to": "emma-doe",
+                "strength": 0.8
+            },
+            {
+                "from": "john-doe",
+                "to": "oliver-doe",
+                "strength": 0.8
+            },
+            {
+                "from": "jane-doe",
+                "to": "emma-doe",
+                "strength": 0.7
+            },
+            {
+                "from": "jane-doe",
+                "to": "oliver-doe",
+                "strength": 0.7
+            }
+        ]
+    },
+    "api_test_requests": {
+        "scenario_1_complete_loss": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate complete income loss for primary earner",
+            "request_body": {
+                "affected_member": "john-doe",
+                "shock_type": "member_loss"
+            },
+            "expected_impact": "CATASTROPHIC - Primary earner with highest income is completely lost"
+        },
+        "scenario_2_job_loss": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate job loss (only stable salary income affected)",
+            "request_body": {
+                "affected_member": "john-doe",
+                "shock_type": "job_loss"
+            },
+            "expected_impact": "HIGH - Loses primary job income but retains rental income"
+        },
+        "scenario_3_freelance_shock": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate 50% reduction in freelance income",
+            "request_body": {
+                "affected_member": "jane-doe",
+                "shock_type": "freelance_shock"
+            },
+            "expected_impact": "MODERATE - Freelance income reduced by 50%, still has some income"
+        },
+        "scenario_4_rental_vacancy": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate loss of rental property income",
+            "request_body": {
+                "affected_member": "john-doe",
+                "shock_type": "rental_vacancy"
+            },
+            "expected_impact": "LOW - Loses rental income but retains primary job salary"
+        },
+        "scenario_5_business_downturn": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate 40% reduction in business income",
+            "request_body": {
+                "affected_member": "john-doe",
+                "shock_type": "business_downturn"
+            },
+            "expected_impact": "MODERATE - Business income reduced, partial income loss"
+        },
+        "scenario_6_pension_cut": {
+            "endpoint": "POST /risk/simulate/:householdId",
+            "description": "Simulate 30% pension reduction",
+            "request_body": {
+                "affected_member": "robert-doe-sr",
+                "shock_type": "pension_cut"
+            },
+            "expected_impact": "LOW - Pension is small portion of total household income"
+        }
+    },
+    "expected_response_format": {
+        "before": 0.35,
+        "after": 0.68,
+        "impact": "HIGH",
+        "shock_type": "job_loss",
+        "shock_description": "Job Loss: Primary earner John Doe loses stable salary income",
+        "before_risk_band": "MEDIUM",
+        "after_risk_band": "HIGH",
+        "affected_member_details": {
+            "id": "john-doe",
+            "name": "John Doe",
+            "role": "earner",
+            "is_earner": true,
+            "income_sources_affected": 1
+        },
+        "scenario_details": {
+            "household_resilience": "MODERATE",
+            "remaining_earners": 2,
+            "total_earners_before": 3
+        }
+    },
+    "curl_examples": {
+        "create_household": "curl -X POST http://localhost:5000/household/create \\\n  -H 'Content-Type: application/json' \\\n  -d @test_household.json",
+        "simulate_job_loss": "curl -X POST http://localhost:5000/risk/simulate/test-family-2025 \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"affected_member\": \"john-doe\", \"shock_type\": \"job_loss\"}'",
+        "simulate_freelance_shock": "curl -X POST http://localhost:5000/risk/simulate/test-family-2025 \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"affected_member\": \"jane-doe\", \"shock_type\": \"freelance_shock\"}'",
+        "simulate_pension_cut": "curl -X POST http://localhost:5000/risk/simulate/test-family-2025 \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"affected_member\": \"robert-doe-sr\", \"shock_type\": \"pension_cut\"}'"
+    },
+    "neo4j_test_queries": {
+        "view_household": "MATCH (h:Household {id: 'test-family-2025'})<-[:BELONGS_TO]-(p:Person)\nOPTIONAL MATCH (p)-[:EARNS_FROM]->(is:IncomeSource)\nRETURN p.id as member, p.role, collect(is.type) as income_types",
+        "check_income_sources": "MATCH (p:Person)-[:EARNS_FROM]->(is:IncomeSource)\nWHERE (p)-[:BELONGS_TO]->(:Household {id: 'test-family-2025'})\nRETURN p.id as member, is.type, is.stability, is.amount_band",
+        "view_support_network": "MATCH (h:Household {id: 'test-family-2025'})<-[:BELONGS_TO]-(p:Person)-[s:SUPPORTS]->(d:Person)\nRETURN p.id as supporter, d.id as dependent, s.strength"
+    },
+    "postman_collection": {
+        "info": {
+            "name": "Income Shock Simulations",
+            "description": "Test collection for all shock scenarios"
+        },
+        "requests": [
+            {
+                "name": "1. Create Test Household",
+                "method": "POST",
+                "url": "{{baseUrl}}/household/create",
+                "body": "{{test_household}}"
+            },
+            {
+                "name": "2. Complete Income Loss",
+                "method": "POST",
+                "url": "{{baseUrl}}/risk/simulate/test-family-2025",
+                "body": {
+                    "affected_member": "john-doe",
+                    "shock_type": "member_loss"
+                }
+            },
+            {
+                "name": "3. Job Loss Shock",
+                "method": "POST",
+                "url": "{{baseUrl}}/risk/simulate/test-family-2025",
+                "body": {
+                    "affected_member": "john-doe",
+                    "shock_type": "job_loss"
+                }
+            },
+            {
+                "name": "4. Freelance Shock",
+                "method": "POST",
+                "url": "{{baseUrl}}/risk/simulate/test-family-2025",
+                "body": {
+                    "affected_member": "jane-doe",
+                    "shock_type": "freelance_shock"
+                }
+            },
+            {
+                "name": "5. Rental Vacancy",
+                "method": "POST",
+                "url": "{{baseUrl}}/risk/simulate/test-family-2025",
+                "body": {
+                    "affected_member": "john-doe",
+                    "shock_type": "rental_vacancy"
+                }
+            },
+            {
+                "name": "6. Pension Cut",
+                "method": "POST",
+                "url": "{{baseUrl}}/risk/simulate/test-family-2025",
+                "body": {
+                    "affected_member": "robert-doe-sr",
+                    "shock_type": "pension_cut"
+                }
+            }
+        ]
+    }
+}

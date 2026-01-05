@@ -2,21 +2,23 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import IncomeSourceInput from '../components/IncomeSourceInput';
 import '../styles/Dashboard.css';
+import '../styles/IncomeSources.css';
 
 const CreateHousehold = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
 
     const [householdId, setHouseholdId] = useState('');
-    const [members, setMembers] = useState([{ id: '', role: 'earner', income_stability: 0.7, is_applicant: false }]);
+    const [members, setMembers] = useState([{ id: '', role: 'earner', income_stability: 0.7, is_applicant: false, income_sources: null }]);
     const [supports, setSupports] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
 
     const handleAddMember = () => {
-        setMembers([...members, { id: '', role: 'dependent', income_stability: 0.5, is_applicant: false }]);
+        setMembers([...members, { id: '', role: 'dependent', income_stability: 0.5, is_applicant: false, income_sources: null }]);
     };
 
     const handleRemoveMember = (index) => {
@@ -40,6 +42,12 @@ const CreateHousehold = () => {
             ...member,
             is_applicant: i === index ? isChecked : false,
         }));
+        setMembers(newMembers);
+    };
+
+    const handleIncomeSourcesChange = (memberIndex, incomeSources) => {
+        const newMembers = [...members];
+        newMembers[memberIndex].income_sources = incomeSources;
         setMembers(newMembers);
     };
 
@@ -87,12 +95,20 @@ const CreateHousehold = () => {
         try {
             await api.createHousehold({
                 householdId: householdId.trim(),
-                members: members.map(m => ({
-                    id: m.id.trim(),
-                    role: m.role,
-                    income_stability: m.income_stability,
-                    is_applicant: m.is_applicant
-                })),
+                members: members.map(m => {
+                    const memberData = {
+                        id: m.id.trim(),
+                        role: m.role,
+                        is_applicant: m.is_applicant
+                    };
+                    // Include income_sources if specified, otherwise use income_stability
+                    if (m.income_sources && m.income_sources.length > 0) {
+                        memberData.income_sources = m.income_sources;
+                    } else {
+                        memberData.income_stability = m.income_stability;
+                    }
+                    return memberData;
+                }),
                 supports: supports.filter(s => s.from && s.to).map(s => ({
                     from: s.from,
                     to: s.to,
@@ -215,6 +231,11 @@ const CreateHousehold = () => {
                                         disabled={loading}
                                     />
                                 </div>
+                                <IncomeSourceInput
+                                    memberIndex={index}
+                                    memberRole={member.role}
+                                    onIncomeSources={handleIncomeSourcesChange}
+                                />
                                 <div className="form-group checkbox-group">
                                     <input
                                         type="checkbox"

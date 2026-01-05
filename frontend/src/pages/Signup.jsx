@@ -15,11 +15,26 @@ const Signup = () => {
     const handleGoogleSignIn = async () => {
         setLoading(true);
         setError('');
+        console.log('🔵 Signup Page: Starting Google Sign-In...');
         const result = await signInWithGoogle();
+        console.log('🔵 Signup Page: Google Sign-In result:', result);
         if (result.success) {
+            console.log('✅ Signup Page: Sign-in successful, navigating...');
             navigate('/');
         } else {
-            setError(result.error);
+            console.error('❌ Signup Page: Sign-in failed:', result.error);
+            // User-friendly error messages
+            let userError = result.error;
+            if (result.error.includes('auth/invalid-credential')) {
+                userError = '⚠️ Authentication not enabled. Please enable Google Sign-In in Firebase Console.';
+            } else if (result.error.includes('auth/popup-closed-by-user')) {
+                userError = 'Sign-in cancelled. Please try again.';
+            } else if (result.error.includes('auth/operation-not-allowed')) {
+                userError = '⚠️ Google Sign-In is not enabled. Please enable it in Firebase Console.';
+            } else if (result.error.includes('auth/unauthorized-domain')) {
+                userError = '⚠️ This domain is not authorized. Please add it to Firebase Console.';
+            }
+            setError(userError);
         }
         setLoading(false);
     };
@@ -40,11 +55,28 @@ const Signup = () => {
         }
         setLoading(true);
         setError('');
+        console.log('🔵 Signup Page: Starting Email Sign-Up for:', email);
         const result = await signUpWithEmail(email, password);
+        console.log('🔵 Signup Page: Email Sign-Up result:', result);
         if (result.success) {
+            console.log('✅ Signup Page: Sign-up successful, navigating...');
             navigate('/');
         } else {
-            setError(result.error);
+            console.error('❌ Signup Page: Sign-up failed:', result.error);
+            // User-friendly error messages
+            let userError = result.error;
+            if (result.error.includes('auth/invalid-credential')) {
+                userError = '⚠️ Email/Password authentication not enabled. Please enable it in Firebase Console.';
+            } else if (result.error.includes('auth/email-already-in-use')) {
+                userError = 'This email is already registered. Please sign in instead.';
+            } else if (result.error.includes('auth/invalid-email')) {
+                userError = 'Invalid email address. Please check and try again.';
+            } else if (result.error.includes('auth/operation-not-allowed')) {
+                userError = '⚠️ Email/Password authentication is not enabled. Please enable it in Firebase Console.';
+            } else if (result.error.includes('auth/weak-password')) {
+                userError = 'Password is too weak. Please use a stronger password.';
+            }
+            setError(userError);
         }
         setLoading(false);
     };

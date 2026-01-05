@@ -1,3 +1,5 @@
+import { formatId } from '../../utils/formatId';
+
 const WeakLinks = ({ data }) => {
     const members = data?.critical_members || data?.weak_links || data?.weakLinks || data?.members || [];
     const reason = data?.reason || '';
@@ -29,7 +31,7 @@ const WeakLinks = ({ data }) => {
                                         <tr key={index} style={isApplicant ? { backgroundColor: 'rgba(0, 64, 133, 0.05)' } : {}}>
                                             <td>
                                                 {isApplicant && <span style={{ color: '#004085', marginRight: '6px', fontWeight: 'bold' }}>★</span>}
-                                                {memberId}
+                                                <span title={memberId}>{formatId(memberId)}</span>
                                                 {isApplicant && (
                                                     <span style={{
                                                         marginLeft: '8px',

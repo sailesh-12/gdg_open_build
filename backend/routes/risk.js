@@ -1,21 +1,27 @@
 const express = require("express");
-const { getMLRisk } = require("../mLservice/service.js");
+const { getMLRisk } = require("../mLService/service.js");
 const { buildRiskContext } = require("../services/riskContext")
+const { aggregateIncomeFeatures } = require("../services/incomeFeatures");
 const driver = require("../db/neo4j");
+const { hashIdentifier } = require("../utils/hashService");
 const router = express.Router();
 
 
 router.post("/analyze/:householdId", async (req, res) => {
   const session = driver.session();
-  const householdId = req.params.householdId;
+  const householdId = hashIdentifier(req.params.householdId);
 
   try {
 
     const result = await session.run(
       `
       MATCH (h:Household {id: $householdId})<-[:BELONGS_TO]-(p:Person)
+      OPTIONAL MATCH (p)-[:EARNS_FROM]->(is:IncomeSource)
       OPTIONAL MATCH (p)-[r:SUPPORTS]->(d:Person)
-      RETURN h, collect(p) AS members, collect(r) AS supports
+      RETURN h, 
+             collect(DISTINCT p) AS members, 
+             collect(DISTINCT is) AS income_sources,
+             collect(r) AS supports
       `,
       { householdId }
     );
@@ -26,10 +32,46 @@ router.post("/analyze/:householdId", async (req, res) => {
 
     const record = result.records[0];
     const members = record.get("members").map(p => p.properties);
+    const incomeSources = record.get("income_sources").map(is => is ? is.properties : null).filter(is => is !== null);
     const supports = record.get("supports").map(r => r.properties);
 
-    const householdPayload = { members, supports };
-    console.log("Payload sent to ML service:", householdPayload);
+    // Group income sources by person
+    const incomeSourcesByPerson = {};
+
+    // Re-query to get person-income source mappings
+    const incomeResult = await session.run(
+      `
+      MATCH (h:Household {id: $householdId})<-[:BELONGS_TO]-(p:Person)
+      OPTIONAL MATCH (p)-[:EARNS_FROM]->(is:IncomeSource)
+      RETURN p.id AS personId, collect(is) AS sources
+      `,
+      { householdId }
+    );
+
+    incomeResult.records.forEach(rec => {
+      const personId = rec.get("personId");
+      const sources = rec.get("sources").map(is => is ? is.properties : null).filter(is => is !== null);
+      incomeSourcesByPerson[personId] = sources;
+    });
+
+    // Aggregate income features for each member before sending to ML
+    const enrichedMembers = members.map(m => {
+      const memberIncomeSources = incomeSourcesByPerson[m.id] || [];
+
+      if (memberIncomeSources.length > 0) {
+        // New behavior: aggregate from income sources
+        m.income_sources = memberIncomeSources;
+        const incomeFeatures = aggregateIncomeFeatures(m);
+        // Use aggregated stability for ML, keep income_sources for context
+        m.income_stability = incomeFeatures.avg_income_stability;
+      }
+      // else: backward compatible - m.income_stability already exists
+
+      return m;
+    });
+
+    const householdPayload = { members: enrichedMembers, supports };
+    console.log("Payload sent to ML service:", JSON.stringify(householdPayload, null, 2));
 
     const mlResult = await getMLRisk(householdPayload);
 
@@ -49,7 +91,11 @@ router.post("/analyze/:householdId", async (req, res) => {
 /* ---------- SUMMARY ---------- */
 router.get("/summary/:id", async (req, res) => {
   try {
-    const ctx = await buildRiskContext(req.params.id);
+    const originalId = req.params.id;
+    const hashedId = hashIdentifier(originalId);
+    console.log(`Summary lookup: ${originalId} -> ${hashedId}`);
+
+    const ctx = await buildRiskContext(hashedId);
     if (!ctx) return res.status(404).json({ error: "Household not found" });
 
     const score = ctx.fragility_score || 0;
@@ -73,10 +119,16 @@ router.get("/summary/:id", async (req, res) => {
 
 /* ---------- EXPLAIN ---------- */
 router.get("/explain/:id", async (req, res) => {
-  const ctx = await buildRiskContext(req.params.id);
+  const ctx = await buildRiskContext(hashIdentifier(req.params.id));
   const f = ctx.features;
 
   const reasons = [];
+
+  // Add income diversity insights first
+  if (ctx.income_insights && ctx.income_insights.length > 0) {
+    reasons.push(...ctx.income_insights);
+  }
+
   if (f.single_point_failure)
     reasons.push("Single income source supports the household");
 
@@ -85,6 +137,7 @@ router.get("/explain/:id", async (req, res) => {
 
   if (f.shock_amplification > 0.6)
     reasons.push("Expenses and medical risk amplify financial stress");
+
   if (reasons.length === 0) {
     reasons.push("Household structure shows strong financial resilience");
   }
@@ -96,7 +149,7 @@ router.get("/explain/:id", async (req, res) => {
 /* ---------- WEAK LINKS ---------- */
 router.get("/weak-links/:id", async (req, res) => {
   try {
-    const ctx = await buildRiskContext(req.params.id);
+    const ctx = await buildRiskContext(hashIdentifier(req.params.id));
     if (!ctx) return res.status(404).json({ error: "Household not found" });
 
     const criticalMembers = ctx.graph_metrics?.critical_members || [];
@@ -118,14 +171,20 @@ router.get("/weak-links/:id", async (req, res) => {
 router.post("/simulate/:id", async (req, res) => {
   const session = driver.session();
   try {
-    const householdId = req.params.id;
-    const { affected_member } = req.body;
+    const householdId = hashIdentifier(req.params.id);
+    const { affected_member, shock_type } = req.body; // NEW: shock_type for income source shocks
 
+    // Validate affected_member BEFORE processing
     if (!affected_member) {
       return res.status(400).json({ error: "affected_member is required" });
     }
 
-    // Fetch all household data
+    // Check if affected_member is already a hash (64 hex chars) or needs to be hashed
+    // If the frontend sends an already-hashed ID from the dropdown, don't hash it again
+    const isAlreadyHashed = affected_member.length === 64 && /^[a-f0-9]+$/i.test(affected_member);
+    const hashedAffectedMember = isAlreadyHashed ? affected_member : hashIdentifier(affected_member);
+
+    // Fetch all household data including income sources
     const result = await session.run(
       `
       MATCH (h:Household {id: $householdId})<-[:BELONGS_TO]-(p:Person)
@@ -148,15 +207,49 @@ router.post("/simulate/:id", async (req, res) => {
     const allMembers = result.records[0].get("members").map(p => p.properties);
     const allSupports = result.records[0].get("supports").filter(s => s.from && s.to);
 
+    // Fetch income sources for all members
+    const incomeResult = await session.run(
+      `
+      MATCH (h:Household {id: $householdId})<-[:BELONGS_TO]-(p:Person)
+      OPTIONAL MATCH (p)-[:EARNS_FROM]->(is:IncomeSource)
+      RETURN p.id AS personId, collect(is) AS sources
+      `,
+      { householdId }
+    );
+
+    const incomeSourcesByPerson = {};
+    incomeResult.records.forEach(rec => {
+      const personId = rec.get("personId");
+      const sources = rec.get("sources").map(is => is ? is.properties : null).filter(is => is !== null);
+      incomeSourcesByPerson[personId] = sources;
+    });
+
+    // Debug logging
+    console.log(`Simulate: affected_member=${affected_member} -> hashed=${hashedAffectedMember}`);
+    console.log(`Shock type: ${shock_type || 'member_loss'}`);
+    console.log(`Members in DB:`, allMembers.map(m => m.id));
+
     // Verify affected member exists
-    const affectedMemberObj = allMembers.find(m => m.id === affected_member);
+    const affectedMemberObj = allMembers.find(m => m.id === hashedAffectedMember);
     if (!affectedMemberObj) {
+      console.log(`Member not found! Looking for: ${hashedAffectedMember}`);
       return res.status(400).json({ error: "Member not found in household" });
     }
 
+    // Enrich members with income sources
+    const enrichedMembers = allMembers.map(m => {
+      const sources = incomeSourcesByPerson[m.id] || [];
+      if (sources.length > 0) {
+        m.income_sources = sources;
+        const incomeFeatures = aggregateIncomeFeatures(m);
+        m.income_stability = incomeFeatures.avg_income_stability;
+      }
+      return m;
+    });
+
     // Get the BEFORE score (current state)
     const beforePayload = {
-      members: allMembers.map(m => ({
+      members: enrichedMembers.map(m => ({
         id: m.id,
         role: m.role || "dependent",
         income_stability: m.income_stability ?? 0.5
@@ -171,17 +264,47 @@ router.post("/simulate/:id", async (req, res) => {
     const beforeResult = await getMLRisk(beforePayload);
     const beforeScore = beforeResult.fragility_score || 0;
 
-    // Create AFTER scenario: set affected member as dependent with no income
-    const afterMembers = allMembers.map(m => {
-      if (m.id === affected_member) {
-        return {
-          ...m,
-          role: "dependent",
-          income_stability: 0,
-        };
-      }
-      return m;
-    });
+    // Create AFTER scenario based on shock type
+    let afterMembers;
+    let shockDescription;
+
+    if (shock_type && ['job_loss', 'freelance_shock', 'rental_vacancy'].includes(shock_type)) {
+      // NEW: Income source-specific shock simulation
+      const { applyIncomeShock } = require("../services/incomeFeatures");
+
+      afterMembers = enrichedMembers.map(m => {
+        if (m.id === hashedAffectedMember && m.income_sources && m.income_sources.length > 0) {
+          // Apply shock to this member's income sources
+          const shockedSources = applyIncomeShock(m.income_sources, shock_type);
+          m.income_sources = shockedSources;
+
+          // Recalculate aggregated income stability
+          const incomeFeatures = aggregateIncomeFeatures(m);
+          m.income_stability = incomeFeatures.avg_income_stability;
+
+          // Set shockdescription for response
+          shockDescription = shock_type === 'job_loss'
+            ? 'Job loss scenario - disabled all job-type income'
+            : shock_type === 'freelance_shock'
+              ? 'Freelance income shock - reduced freelance stability by 40%'
+              : 'Rental vacancy - increased rental income volatility to maximum';
+        }
+        return m;
+      });
+    } else {
+      // LEGACY: Member loss simulation (backward compatible)
+      afterMembers = enrichedMembers.map(m => {
+        if (m.id === hashedAffectedMember) {
+          return {
+            ...m,
+            role: "dependent",
+            income_stability: 0,
+          };
+        }
+        return m;
+      });
+      shockDescription = 'Complete income loss - member becomes dependent';
+    }
 
     // Handle edge case: no members left after hypothetical change
     if (afterMembers.length === 0) {
@@ -189,6 +312,7 @@ router.post("/simulate/:id", async (req, res) => {
         before: beforeScore,
         after: 1.0, // Maximum fragility - household collapses
         impact: "CATASTROPHIC",
+        shock_description: shockDescription,
         details: {
           affected_member: affected_member,
           is_earner: affectedMemberObj.role === "earner",
@@ -237,8 +361,10 @@ router.post("/simulate/:id", async (req, res) => {
       before: beforeScore,
       after: afterScore,
       impact,
+      shock_description: shockDescription, // NEW: Description of the shock applied
       details: {
         affected_member: affected_member,
+        shock_type: shock_type || 'member_loss', // NEW: Which shock was applied
         is_earner: affectedMemberObj.role === "earner",
         income_stability: affectedMemberObj.income_stability ?? 0.5,
         remaining_members: afterMembers.length,
@@ -248,7 +374,15 @@ router.post("/simulate/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("Error in /simulate:", error);
-    res.status(500).json({ error: "Internal server error" });
+    // Return the actual error message if it's a known error type
+    const errorMessage = error.message.includes("NO_MEMBERS_FOUND")
+      ? "No members found in household to simulate."
+      : error.message.includes("ML_SERVICE_UNAVAILABLE")
+        ? "Risk analysis service is temporarily unavailable. Please try again later."
+        : error.message.includes("Member not found")
+          ? "Selected member was not found in the household."
+          : "Simulation could not be completed. Please try again.";
+    res.status(500).json({ error: errorMessage });
   } finally {
     await session.close();
   }
@@ -256,10 +390,20 @@ router.post("/simulate/:id", async (req, res) => {
 
 /* ---------- RECOMMENDATIONS ---------- */
 router.get("/recommendations/:id", async (req, res) => {
-  const ctx = await buildRiskContext(req.params.id);
+  const ctx = await buildRiskContext(hashIdentifier(req.params.id));
   const f = ctx.features;
 
   const recommendations = [];
+
+  // Check for income diversification opportunities
+  const earners = ctx.members.filter(m => m.role === "earner");
+  const earnersWithSingleSource = earners.filter(m => {
+    return !m.income_sources || m.income_sources.length <= 1;
+  });
+
+  if (earnersWithSingleSource.length > 0 && f.single_point_failure) {
+    recommendations.push("Diversify income sources - consider secondary income streams");
+  }
 
   if (f.single_point_failure)
     recommendations.push("Add a secondary income source");
@@ -280,7 +424,7 @@ router.get("/recommendations/:id", async (req, res) => {
 
 /* ---------- LOAN EVALUATION ---------- */
 router.post("/loan-evaluation/:id", async (req, res) => {
-  const ctx = await buildRiskContext(req.params.id);
+  const ctx = await buildRiskContext(hashIdentifier(req.params.id));
 
   const suggestions = [];
   let loan_risk = "LOW"; // Default to LOW
@@ -309,7 +453,7 @@ router.post("/loan-evaluation/:id", async (req, res) => {
     suggestions.push("Require income backup or guarantor");
     // Only escalate to HIGH if fragility is also concerning
     if (ctx.fragility_score > 0.6) {
-      loan_risk = "HIGH"; 
+      loan_risk = "HIGH";
     }
   }
 
@@ -364,7 +508,7 @@ router.post("/loan-evaluation/:id", async (req, res) => {
 /* ---------- GRAPH DATA FOR VISUALIZATION ---------- */
 router.get("/graph-data/:id", async (req, res) => {
   const session = driver.session();
-  const householdId = req.params.id;
+  const householdId = hashIdentifier(req.params.id);
 
   try {
     // Fetch household members and support relationships

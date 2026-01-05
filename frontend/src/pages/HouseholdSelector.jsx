@@ -87,9 +87,14 @@ const HouseholdSelector = () => {
                         <span>or</span>
                     </div>
 
-                    <Link to="/create" className="gov-button gov-button-secondary" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
-                        Register New Household
-                    </Link>
+                    <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <Link to="/create" className="gov-button gov-button-secondary" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none' }}>
+                            Register Manually
+                        </Link>
+                        <Link to="/upload-statement" className="gov-button" style={{ display: 'inline-block', textAlign: 'center', textDecoration: 'none', background: 'linear-gradient(135deg, #1976d2 0%, #0d47a1 100%)' }}>
+                            📄 Upload Bank Statement
+                        </Link>
+                    </div>
                 </section>
 
                 {/* System Capabilities */}
@@ -118,7 +123,7 @@ const HouseholdSelector = () => {
                         <tbody>
                             <tr>
                                 <td>Model Accuracy</td>
-                                <td>99.2%</td>
+                                <td>90.2%</td>
                             </tr>
                             <tr>
                                 <td>Average Analysis Time</td>

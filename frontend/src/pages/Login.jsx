@@ -14,28 +14,61 @@ const Login = () => {
     const handleGoogleSignIn = async () => {
         setLoading(true);
         setError('');
+        console.log('🔵 Login Page: Starting Google Sign-In...');
         const result = await signInWithGoogle();
+        console.log('🔵 Login Page: Google Sign-In result:', result);
         if (result.success) {
+            console.log('✅ Login Page: Sign-in successful, navigating...');
             navigate('/');
         } else {
-            setError(result.error);
+            console.error('❌ Login Page: Sign-in failed:', result.error);
+            // User-friendly error messages
+            let userError = result.error;
+            if (result.error.includes('auth/invalid-credential')) {
+                userError = '⚠️ Authentication not enabled. Please enable Google Sign-In in Firebase Console.';
+            } else if (result.error.includes('auth/popup-closed-by-user')) {
+                userError = 'Sign-in cancelled. Please try again.';
+            } else if (result.error.includes('auth/operation-not-allowed')) {
+                userError = '⚠️ Google Sign-In is not enabled. Please enable it in Firebase Console.';
+            } else if (result.error.includes('auth/unauthorized-domain')) {
+                userError = '⚠️ This domain is not authorized. Please add it to Firebase Console.';
+            }
+            setError(userError);
         }
         setLoading(false);
     };
 
     const handleEmailSignIn = async (e) => {
         e.preventDefault();
+
         if (!email || !password) {
             setError('Please fill in all fields');
             return;
         }
         setLoading(true);
         setError('');
+        console.log('🔵 Login Page: Starting Email Sign-In for:', email);
         const result = await signInWithEmail(email, password);
+        console.log('🔵 Login Page: Email Sign-In result:', result);
         if (result.success) {
+            console.log(' Login Page: Sign-in successful, navigating...');
             navigate('/');
         } else {
-            setError(result.error);
+            console.error(' Login Page: Sign-in failed:', result.error);
+            // User-friendly error messages
+            let userError = result.error;
+            if (result.error.includes('auth/invalid-credential')) {
+                userError = 'Invalid email or password. Please check your credentials or enable Email/Password authentication in Firebase Console.';
+            } else if (result.error.includes('auth/user-not-found')) {
+                userError = 'No account found with this email. Please sign up first.';
+            } else if (result.error.includes('auth/wrong-password')) {
+                userError = 'Incorrect password. Please try again.';
+            } else if (result.error.includes('auth/operation-not-allowed')) {
+                userError = 'Email/Password authentication is not enabled. Please enable it in Firebase Console.';
+            } else if (result.error.includes('auth/too-many-requests')) {
+                userError = 'Too many failed attempts. Please try again later.';
+            }
+            setError(userError);
         }
         setLoading(false);
     };
@@ -49,7 +82,8 @@ const Login = () => {
                         <p>Enter your credentials to access the household risk analysis system</p>
                     </div>
 
-                    {error && <div className="auth-error">{error}</div>}
+                    {error &&
+                     <div className="auth-error">{error}</div>}
 
                     <button
                         onClick={handleGoogleSignIn}
