@@ -77,7 +77,8 @@ router.post("/analyze/:householdId", async (req, res) => {
 
     res.json({
       householdId,
-      ...mlResult
+      ...mlResult,
+      members: enrichedMembers // Include members with income_sources for simulation UI
     });
 
   } catch (err) {

@@ -1,34 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../services/api';
 import { formatId } from '../../utils/formatId';
 
 const Simulation = ({ householdId, members }) => {
     const [selectedMember, setSelectedMember] = useState('');
-    const [shockType, setShockType] = useState('member_loss'); // NEW: Shock type selector
+    const [shockType, setShockType] = useState('member_loss');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
+    const [memberIncomeSources, setMemberIncomeSources] = useState({});
 
     // Filter members to only include earners and applicants (only they have income to lose)
     const memberList = members
         .map(member => {
-            if (typeof member === 'string') return { id: member, role: '', is_applicant: false };
+            if (typeof member === 'string') return { id: member, role: '', is_applicant: false, income_sources: [] };
             return {
                 id: member.id || member.name || member,
                 role: member.role || '',
-                is_applicant: member.is_applicant || false
+                is_applicant: member.is_applicant || false,
+                income_sources: member.income_sources || []
             };
         })
         .filter(member => member.role === 'earner' || member.is_applicant);
 
-    const shockTypes = [
-        { value: 'member_loss', label: '💔 Complete Income Loss', description: 'Member completely loses all income' },
-        { value: 'job_loss', label: '💼 Job Loss (Stable Income)', description: 'Loss of job/salary income only' },
-        { value: 'freelance_shock', label: '💻 Freelance Shock (Irregular Income)', description: '50% reduction in freelance income' },
-        { value: 'rental_vacancy', label: '🏠 Rental Income Loss', description: 'Loss of rental property income' },
-        { value: 'business_downturn', label: '📉 Business Downturn', description: '40% reduction in business income' },
-        { value: 'pension_cut', label: '👴 Pension Reduction', description: '30% cut in pension income' }
+    // All available shock types
+    const allShockTypes = [
+        { value: 'member_loss', label: '💔 Complete Income Loss', description: 'Member completely loses all income', incomeType: null },
+        { value: 'job_loss', label: '💼 Job Loss (Stable Income)', description: 'Loss of job/salary income only', incomeType: 'job' },
+        { value: 'freelance_shock', label: '💻 Freelance Shock (Irregular Income)', description: '50% reduction in freelance income', incomeType: 'freelance' },
+        { value: 'rental_vacancy', label: '🏠 Rental Income Loss', description: 'Loss of rental property income', incomeType: 'rental' },
+        { value: 'business_downturn', label: '📉 Business Downturn', description: '40% reduction in business income', incomeType: 'business' },
+        { value: 'pension_cut', label: '👴 Pension Reduction', description: '30% cut in pension income', incomeType: 'pension' }
     ];
+
+    // Get filtered shock types based on selected member's income sources
+    const getAvailableShockTypes = () => {
+        if (!selectedMember) return allShockTypes;
+
+        const member = memberList.find(m => m.id === selectedMember);
+        if (!member || !member.income_sources || member.income_sources.length === 0) {
+            // If no income sources data, show all options
+            return allShockTypes;
+        }
+
+        // Get unique income types for this member
+        const memberIncomeTypes = [...new Set(member.income_sources.map(src => src.type))];
+
+        // Filter shock types: always include 'member_loss', and include others if member has that income type
+        return allShockTypes.filter(shock =>
+            shock.incomeType === null || memberIncomeTypes.includes(shock.incomeType)
+        );
+    };
+
+    const shockTypes = getAvailableShockTypes();
+
+    // Reset shock type when member changes to ensure it's valid for the new member
+    useEffect(() => {
+        if (selectedMember) {
+            const availableTypes = getAvailableShockTypes();
+            const currentShockStillValid = availableTypes.some(s => s.value === shockType);
+            if (!currentShockStillValid) {
+                setShockType('member_loss'); // Reset to default if current shock is not valid
+            }
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedMember]);
 
     const handleSimulate = async () => {
         if (!selectedMember) {
@@ -177,6 +213,54 @@ const Simulation = ({ householdId, members }) => {
                             />
                         )}
                     </div>
+
+                    {/* Display selected member's income sources */}
+                    {selectedMember && memberList.find(m => m.id === selectedMember)?.income_sources?.length > 0 && (
+                        <div style={{
+                            marginTop: '16px',
+                            padding: '12px 16px',
+                            backgroundColor: '#f0f8ff',
+                            borderLeft: '4px solid #2196f3',
+                            borderRadius: '4px'
+                        }}>
+                            <div style={{
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                color: '#1565c0',
+                                marginBottom: '8px'
+                            }}>
+                                💰 Income Sources for Selected Member
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                {memberList.find(m => m.id === selectedMember).income_sources.map((source, idx) => {
+                                    const icon = source.type === 'job' ? '💼' :
+                                        source.type === 'freelance' ? '💻' :
+                                            source.type === 'rental' ? '🏠' :
+                                                source.type === 'business' ? '📊' :
+                                                    source.type === 'pension' ? '👴' : '💰';
+                                    return (
+                                        <span
+                                            key={idx}
+                                            style={{
+                                                fontSize: '12px',
+                                                padding: '4px 10px',
+                                                borderRadius: '12px',
+                                                backgroundColor: source.is_primary ? '#2196f3' : '#90caf9',
+                                                color: 'white',
+                                                fontWeight: source.is_primary ? '600' : '500',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                            }}
+                                        >
+                                            {icon} {source.type.charAt(0).toUpperCase() + source.type.slice(1)}
+                                            {source.is_primary && <span style={{ fontSize: '10px' }}>★</span>}
+                                        </span>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
 
                     {/* NEW: Shock Type Selector */}
                     <div className="form-group" style={{ marginTop: '20px' }}>
