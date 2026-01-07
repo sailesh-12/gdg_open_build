@@ -28,7 +28,7 @@ app.use("/risk", riskRoutes);
 app.use("/statement", statementRoutes);
 
 app.get("/", (req, res) => {
-  res.send("Express + Neo4j working");
+  res.send("GDG Open Build Backend");
 });
 
 app.listen(process.env.PORT, () => {
