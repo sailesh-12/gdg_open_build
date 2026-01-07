@@ -13,7 +13,10 @@ dotenv.config();
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    if (!origin) {
+      console.log('CORS: Allowing request with no origin');
+      return callback(null, true);
+    }
 
     // List of allowed origins
     const allowedOrigins = [
@@ -23,20 +26,25 @@ const corsOptions = {
     ];
 
     // Check if origin matches exactly or is a Vercel deployment
-    if (allowedOrigins.includes(origin) || (origin && origin.endsWith('.vercel.app'))) {
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      console.log('CORS: Allowing origin:', origin);
       callback(null, true);
     } else {
-      console.log('CORS blocked origin:', origin);
+      console.log('CORS: Blocked origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  optionsSuccessStatus: 200
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Length', 'X-Request-Id'],
+  optionsSuccessStatus: 200,
+  preflightContinue: false
 };
 
 const app = express();
+
+// Apply CORS before other middleware
 app.use(cors(corsOptions));
 app.use(express.json());
 
