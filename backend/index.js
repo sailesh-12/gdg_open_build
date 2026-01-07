@@ -9,43 +9,12 @@ const statementRoutes = require("./routes/statement");
 // On Render, env vars are set in dashboard and don't need .env file
 dotenv.config();
 
-// CORS configuration for Vercel and local development
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      console.log('CORS: Allowing request with no origin');
-      return callback(null, true);
-    }
 
-    // List of allowed origins
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      'https://gdg-open-build.vercel.app'
-    ];
-
-    // Check if origin matches exactly or is a Vercel deployment
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
-      console.log('CORS: Allowing origin:', origin);
-      callback(null, true);
-    } else {
-      console.log('CORS: Blocked origin:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-  exposedHeaders: ['Content-Length', 'X-Request-Id'],
-  optionsSuccessStatus: 200,
-  preflightContinue: false
-};
 
 const app = express();
 
 // Apply CORS before other middleware
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json());
 
 
