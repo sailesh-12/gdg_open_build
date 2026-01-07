@@ -5,8 +5,9 @@ const riskRoutes = require("./routes/risk.js");
 const householdRoutes = require("./routes/household");
 const statementRoutes = require("./routes/statement");
 
-// Load the .env file from the custom path
-dotenv.config({ path: "/custom/path/.env" });
+// Load environment variables from .env file (for local dev)
+// On Render, env vars are set in dashboard and don't need .env file
+dotenv.config();
 
 const app = express();
 app.use(cors());
@@ -31,6 +32,6 @@ app.get("/", (req, res) => {
   res.send("GDG Open Build Backend");
 });
 
-app.listen(process.env.PORT, () => {
-  console.log("Server running on port 5000");
+app.listen(process.env.PORT || 5000, () => {
+  console.log(`Server running on port ${process.env.PORT || 5000}`);
 });
