@@ -82,7 +82,28 @@ Create `backend/package.json` start script:
    - **Start Command**: `npm start`
    - **Instance Type**: Free
 
-### Step 3: Add Environment Variables on Render
+### Step 3: Setup Google Cloud Service Account (Required for Vertex AI)
+
+Before adding environment variables, you need to create a service account for authentication:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Select your project
+3. Navigate to **IAM & Admin** → **Service Accounts**
+4. Click **"Create Service Account"**
+5. Fill in:
+   - **Name**: `render-backend-service`
+   - **Description**: `Service account for Render backend deployment`
+6. Click **"Create and Continue"**
+7. Grant roles:
+   - **Vertex AI User**
+   - **AI Platform Developer** (if using predictions)
+8. Click **"Continue"** → **"Done"**
+9. Click on the created service account
+10. Go to **"Keys"** tab → **"Add Key"** → **"Create new key"**
+11. Choose **JSON** → Click **"Create"**
+12. 📝 **Save the downloaded JSON file** - you'll need its contents
+
+### Step 4: Add Environment Variables on Render
 
 Click **"Environment"** tab and add:
 
@@ -96,9 +117,12 @@ NEO4J_USER=neo4j
 NEO4J_PASSWORD=your-aura-password
 
 # Google Cloud Vertex AI
-GOOGLE_CLOUD_PROJECT_ID=your-project-id
-VERTEX_AI_LOCATION=europe-west4
-VERTEX_AI_ENDPOINT_ID=your-endpoint-id
+VERTEX_PROJECT_ID=your-project-id
+VERTEX_LOCATION=europe-west4
+VERTEX_ENDPOINT_ID=your-endpoint-id
+
+# Google Cloud Service Account (paste entire JSON as single line)
+GOOGLE_APPLICATION_CREDENTIALS_JSON={"type":"service_account","project_id":"your-project",...}
 
 # Gemini AI
 GEMINI_API_KEY=your-gemini-api-key
@@ -106,6 +130,8 @@ GEMINI_API_KEY=your-gemini-api-key
 # CORS (add your Vercel frontend URL later)
 ALLOWED_ORIGINS=https://your-app.vercel.app
 ```
+
+> ⚠️ **IMPORTANT**: For `GOOGLE_APPLICATION_CREDENTIALS_JSON`, open your downloaded service account JSON file, copy the ENTIRE contents, and paste it as a single line (remove line breaks).
 
 ### Step 4: Deploy
 

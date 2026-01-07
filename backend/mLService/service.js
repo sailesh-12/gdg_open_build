@@ -1,9 +1,29 @@
 const { PredictionServiceClient } = require("@google-cloud/aiplatform").v1;
 
-// Initialize the Vertex AI client
-const client = new PredictionServiceClient({
-  apiEndpoint: `${process.env.VERTEX_LOCATION || "europe-west4"}-aiplatform.googleapis.com`
-});
+// Initialize the Vertex AI client with credentials from environment
+const getClientConfig = () => {
+  const config = {
+    apiEndpoint: `${process.env.VERTEX_LOCATION || "europe-west4"}-aiplatform.googleapis.com`
+  };
+
+  // If GOOGLE_APPLICATION_CREDENTIALS_JSON is provided (for Render/cloud deployment)
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+    try {
+      const credentials = JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+      config.credentials = credentials;
+    } catch (error) {
+      console.error("Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON:", error.message);
+    }
+  }
+  // If GOOGLE_APPLICATION_CREDENTIALS path is provided (for local development)
+  else if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    config.keyFilename = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  }
+
+  return config;
+};
+
+const client = new PredictionServiceClient(getClientConfig());
 
 // Construct the endpoint resource name
 const ENDPOINT = `projects/${process.env.VERTEX_PROJECT_ID || "gdgmlmodel"}/locations/${process.env.VERTEX_LOCATION || "europe-west4"}/endpoints/${process.env.VERTEX_ENDPOINT_ID || "5547513350176374784"}`;
