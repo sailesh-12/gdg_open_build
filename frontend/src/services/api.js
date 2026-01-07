@@ -1,5 +1,4 @@
-
-const API_BASE_URL = 'https://gdg-open-build-backend.onrender.com';
+const API_BASE_URL = 'https://gdg-open-build.onrender.com';
 
 export const api = {
     // Get risk summary for a household
