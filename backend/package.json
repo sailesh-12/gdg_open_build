@@ -13,7 +13,6 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@google-cloud/aiplatform": "^6.0.0",
     "@google/generative-ai": "^0.21.0",
     "axios": "^1.13.2",
     "cors": "^2.8.5",
