@@ -3,6 +3,7 @@
 
 ---
 
+<img width="1903" height="875" alt="image" src="https://github.com/user-attachments/assets/55dfcaae-2e1e-4e72-8ff1-2236a8ce44c4" />
 ## 📌 Overview
 
 **AnchorRisk** is a fintech decision-support platform that evaluates **loan risk by analyzing household financial structures**, not just individual income.
@@ -18,8 +19,6 @@ This project was built as a **hackathon MVP** with a focus on:
 
 ---
 
-<img width="1903" height="875" alt="image" src="https://github.com/user-attachments/assets/81e3d47f-3e67-4983-a85b-a2eb7f9beaab" />
-
 ## Video Link
 https://drive.google.com/file/d/1HfjbZiAJZR1ore9xxCwhljQ9F02IUzu5/view
 ## 🎯 Problem Statement
@@ -32,7 +31,6 @@ Existing systems fail to capture:
 - Cascading financial stress
 
 AnchorRisk addresses this gap using **graph modeling + ML-based fragility analysis**.
-<img width="1903" height="875" alt="image" src="https://github.com/user-attachments/assets/55dfcaae-2e1e-4e72-8ff1-2236a8ce44c4" />
 
 ---
 
