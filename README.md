@@ -1,10 +1,10 @@
-# 🏦 AnchorRisk  
+### 🏦 AnchorRisk  
 ### Household-Aware Financial Risk & Loan Decision Support System
 
 ---
 
 <img width="1903" height="875" alt="image" src="https://github.com/user-attachments/assets/55dfcaae-2e1e-4e72-8ff1-2236a8ce44c4" />
-## 📌 Overview
+###📌 Overview
 
 **AnchorRisk** is a fintech decision-support platform that evaluates **loan risk by analyzing household financial structures**, not just individual income.
 
